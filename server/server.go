@@ -185,6 +185,12 @@ func processPacket(packet Packet) {
 func processPDU(pdu []byte, src *net.UDPAddr) {
 	data := string(pdu)
 	lines := strings.Split(data, "\r\n")
+
+	if lines[0] == "xxx" {
+		ServerConn.WriteToUDP(RootTrie.GetWords(), src)
+		return
+	}
+
 	items := strings.Split(lines[0], "||")
 
 	var flag bool
@@ -193,14 +199,16 @@ func processPDU(pdu []byte, src *net.UDPAddr) {
 	case 3:
 		max := str2Int[int](items[2])
 		if max == 0 {
-			log.Println(`invalid max from:`, src.String())
-			break
+			log.Println("invalid max from:", src.String())
+		} else if max > 0 {
+			flag = RootTrie.InsertConditionalDefaultDuration(items[0], items[1], max)
+		} else {
+			flag = RootTrie.DeleteSingle(items[0], items[1])
 		}
-		flag = RootTrie.InsertConditionalDefaultDuration(items[0], items[1], max)
 	case 4:
 		max := str2Int[int](items[3])
 		if max == 0 {
-			log.Println(`invalid max from:`, src.String())
+			log.Println("invalid max from:", src.String())
 			break
 		}
 		dur, _ := str2IntDefaultMinMax(items[2], 300, 300, 900)

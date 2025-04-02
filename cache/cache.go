@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"strings"
 	"sync"
 	"time"
 )
@@ -114,6 +115,16 @@ func (t *Trie) Search(word string, isPrefix bool) bool {
 	return isPrefix || node.isEnd
 }
 
+func (t *Trie) GetWords() []byte {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+	var sb strings.Builder
+	for k, _ := range t.timers {
+		sb.WriteString(k + "\r\n")
+	}
+	return []byte(sb.String())
+}
+
 func (t *Trie) GetWordsWithPrefix(prefix string) []string {
 	if prefix == "" {
 		return nil
@@ -147,9 +158,13 @@ func (t *Trie) collectWords(node *TrieNode, prefix string, words *[]string) {
 	}
 }
 
-func (t *Trie) Delete(word string, isPrefix bool) {
+func (t *Trie) DeleteSingle(prefix, suffix string) bool {
+	return t.Delete(prefix+suffix, false)
+}
+
+func (t *Trie) Delete(word string, isPrefix bool) bool {
 	if word == "" {
-		return
+		return false
 	}
 
 	t.mutex.Lock()
@@ -164,6 +179,8 @@ func (t *Trie) Delete(word string, isPrefix bool) {
 			t.deleteWord(t.root, word, 0)
 		}
 	}
+
+	return true
 }
 
 func (t *Trie) deleteWord(node *TrieNode, word string, index int) bool {
