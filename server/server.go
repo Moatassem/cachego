@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func newSyncPool(bsz int) *sync.Pool {
 	}
 }
 
-func startServer(serverSocket, duration string) {
+func Start(serverSocket, duration string) {
 	defaultDuration, _ := str2IntDefaultMinMax(duration, 300, 300, 900)
 	RootTrie = cache.NewTrie(time.Duration(defaultDuration) * time.Second)
 
@@ -184,17 +184,37 @@ func processPacket(packet Packet) {
 
 func processPDU(pdu []byte, src *net.UDPAddr) {
 	data := string(pdu)
-	items := strings.Split(data, "||")
+	lines := strings.Split(data, "\r\n")
+	items := strings.Split(lines[0], "||")
+
+	var flag bool
 
 	switch len(items) {
 	case 3:
 		max := str2Int[int](items[2])
-		RootTrie.InsertConditionalDefaultDuration(items[0], items[1], max)
+		if max == 0 {
+			log.Println(`invalid max from:`, src.String())
+			break
+		}
+		flag = RootTrie.InsertConditionalDefaultDuration(items[0], items[1], max)
 	case 4:
-		dur, _ := str2IntDefaultMinMax(items[2], 300, 300, 900)
 		max := str2Int[int](items[3])
-		RootTrie.InsertConditional(items[0], items[1], time.Duration(dur)*time.Second, max)
+		if max == 0 {
+			log.Println(`invalid max from:`, src.String())
+			break
+		}
+		dur, _ := str2IntDefaultMinMax(items[2], 300, 300, 900)
+		flag = RootTrie.InsertConditional(items[0], items[1], time.Duration(dur)*time.Second, max)
 	default:
 		log.Println("invalid PDU:", data, "from:", src.String())
 	}
+
+	ServerConn.WriteToUDP(result(flag), src)
+}
+
+func result(flg bool) []byte {
+	if flg {
+		return []byte("true")
+	}
+	return []byte("false")
 }

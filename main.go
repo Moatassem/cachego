@@ -1,14 +1,15 @@
 package main
 
 import (
+	"cachego/server"
 	"fmt"
 	"os"
 )
 
 func main() {
 	fmt.Println("CacheGo Server v1.0")
-	startServer(readEnvVars())
-	WtGrp.Wait()
+	server.Start(readEnvVars())
+	server.WtGrp.Wait()
 }
 
 func readEnvVars() (string, string) {
