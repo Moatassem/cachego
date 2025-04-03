@@ -16,6 +16,7 @@ import (
 var (
 	WtGrp    sync.WaitGroup
 	RootTrie *cache.Trie
+	MCache   *cache.MemCache
 
 	BufferSize = 1024
 	BufferPool = newSyncPool(BufferSize)
@@ -45,6 +46,7 @@ func newSyncPool(bsz int) *sync.Pool {
 func Start(serverSocket, duration string) {
 	defaultDuration, _ := str2IntDefaultMinMax(duration, 300, 300, 900)
 	RootTrie = cache.NewTrie(time.Duration(defaultDuration) * time.Second)
+	MCache = cache.NewMemCache(time.Duration(defaultDuration) * time.Second)
 
 	fmt.Print("Starting server...")
 	startListening(serverSocket)
@@ -176,7 +178,7 @@ func worker(queue <-chan Packet) {
 func processPacket(packet Packet) {
 	pdu := (*packet.buffer)[:packet.bytesCount]
 	if len(pdu) > 0 {
-		processPDU(pdu, packet.sourceAddr)
+		processPDU2(pdu, packet.sourceAddr)
 	}
 
 	BufferPool.Put(packet.buffer)
@@ -213,6 +215,44 @@ func processPDU(pdu []byte, src *net.UDPAddr) {
 		}
 		dur, _ := str2IntDefaultMinMax(items[2], 300, 300, 900)
 		flag = RootTrie.InsertConditional(items[0], items[1], time.Duration(dur)*time.Second, max)
+	default:
+		log.Println("invalid PDU:", data, "from:", src.String())
+	}
+
+	ServerConn.WriteToUDP(result(flag), src)
+}
+
+func processPDU2(pdu []byte, src *net.UDPAddr) {
+	data := string(pdu)
+	lines := strings.Split(data, "\r\n")
+
+	if lines[0] == "xxx" {
+		ServerConn.WriteToUDP(MCache.GetWords(), src)
+		return
+	}
+
+	items := strings.Split(lines[0], "||")
+
+	var flag bool
+
+	switch len(items) {
+	case 3:
+		max := str2Int[int](items[2])
+		if max == 0 {
+			log.Println("invalid max from:", src.String())
+		} else if max > 0 {
+			flag = MCache.InsertOrRefreshDD(items[0], items[1], max)
+		} else {
+			flag = MCache.Delete(items[0], items[1])
+		}
+	case 4:
+		max := str2Int[int](items[3])
+		if max == 0 {
+			log.Println("invalid max from:", src.String())
+			break
+		}
+		dur, _ := str2IntDefaultMinMax(items[2], 300, 300, 900)
+		flag = MCache.InsertOrRefresh(items[0], items[1], time.Duration(dur)*time.Second, max)
 	default:
 		log.Println("invalid PDU:", data, "from:", src.String())
 	}

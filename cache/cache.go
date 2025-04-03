@@ -119,7 +119,7 @@ func (t *Trie) GetWords() []byte {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
 	var sb strings.Builder
-	for k, _ := range t.timers {
+	for k := range t.timers {
 		sb.WriteString(k + "\r\n")
 	}
 	return []byte(sb.String())
