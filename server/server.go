@@ -219,7 +219,7 @@ func processPDU(pdu []byte, src *net.UDPAddr) {
 		log.Println("invalid PDU:", data, "from:", src.String())
 	}
 
-	ServerConn.WriteToUDP(result(flag, items[1]), src)
+	ServerConn.WriteToUDP(result(items[0], items[1], flag), src)
 }
 
 func processPDU2(pdu []byte, src *net.UDPAddr) {
@@ -257,12 +257,9 @@ func processPDU2(pdu []byte, src *net.UDPAddr) {
 		log.Println("invalid PDU:", data, "from:", src.String())
 	}
 
-	ServerConn.WriteToUDP(result(flag, items[1]), src)
+	ServerConn.WriteToUDP(result(items[0], items[1], flag), src)
 }
 
-func result(flg bool, suffix string) []byte {
-	if flg {
-		return []byte(suffix + ":true")
-	}
-	return []byte(suffix + ":false")
+func result(prefix, suffix string, flg bool) []byte {
+	return []byte(prefix + "||" + suffix + "||" + fmt.Sprint(flg))
 }
