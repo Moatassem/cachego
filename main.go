@@ -8,7 +8,12 @@ import (
 
 func main() {
 	fmt.Println("CacheGo Server v1.0")
-	server.Start(readEnvVars())
+	if len(os.Args) == 3 {
+		skt, dur := os.Args[1], os.Args[2]
+		server.Start(skt, dur)
+	} else {
+		server.Start(readEnvVars())
+	}
 	server.WtGrp.Wait()
 }
 
