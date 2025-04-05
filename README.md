@@ -1,2 +1,3 @@
 # cachego
-Very fast Cache in Go
+
+Very fast customized Cache in Go
