@@ -4,5 +4,5 @@
 - UDP based
 
 ## Format
-- Prefix||Suffix||TimeOut||<MaxRecordsPerPrefix>
-- Or, Prefix||Suffix||<MaxRecordsPerPrefix>
+- Prefix||Suffix||TimeOut||< MaxRecordsPerPrefix >
+- Or, Prefix||Suffix||< MaxRecordsPerPrefix >
