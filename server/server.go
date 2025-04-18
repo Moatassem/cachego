@@ -229,6 +229,9 @@ func processPDU(pdu []byte, src *net.UDPAddr) {
 	if lines[0] == "xxx" {
 		ServerConn.WriteToUDP(MCache.GetWords(), src)
 		return
+	} else if lines[0] == "xxxx" {
+		ServerConn.WriteToUDP(MCache.GetWordsCount(), src)
+		return
 	}
 
 	items := strings.Split(lines[0], "||")
@@ -255,6 +258,7 @@ func processPDU(pdu []byte, src *net.UDPAddr) {
 		flag = MCache.InsertOrRefresh(items[0], items[1], time.Duration(dur)*time.Second, max)
 	default:
 		log.Println("invalid PDU:", data, "from:", src.String())
+		return
 	}
 
 	ServerConn.WriteToUDP(result(items[0], items[1], flag), src)

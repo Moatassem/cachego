@@ -1,3 +1,3 @@
-# cachego
+## Very fast customized Caching Server in Go - CacheGo
 
-Very fast customized Cache in Go
+- Capable of +200K read/write cycles per second

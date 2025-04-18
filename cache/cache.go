@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -66,6 +67,19 @@ func (mc *MemCache) GetWords() []byte {
 	}
 
 	return []byte(sb.String())
+}
+
+func (mc *MemCache) GetWordsCount() []byte {
+	mc.mutex.RLock()
+	defer mc.mutex.RUnlock()
+
+	count := 0
+
+	for _, mp := range mc.datamap {
+		count += len(mp)
+	}
+
+	return fmt.Appendf(nil, "Cache contains: %d words", count)
 }
 
 func (mc *MemCache) Delete(prefix, suffix string) bool {
