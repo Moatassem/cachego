@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"strconv"
@@ -45,15 +46,15 @@ func NewUDPClient(serverAddr string) (*UDPClient, error) {
 }
 
 func (c *UDPClient) listenForResponses() {
-	buf := make([]byte, 1024)
+	reader := bufio.NewReader(c.conn)
 	for {
-		n, _, err := c.conn.ReadFromUDP(buf)
+		bytes, err := reader.ReadBytes(byte('\n'))
 		if err != nil {
 			fmt.Println("Error reading response:", err)
 			continue
 		}
 
-		data := string(buf[:n])
+		data := string(bytes)
 		items := strings.Split(data, "||")
 
 		correlationID := items[0] + "||" + items[1]

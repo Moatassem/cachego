@@ -180,7 +180,6 @@ func processPacket(packet Packet) {
 	if len(pdu) > 0 {
 		processPDU(pdu, packet.sourceAddr)
 	}
-
 	BufferPool.Put(packet.buffer)
 }
 
